@@ -21,7 +21,8 @@ export async function POST(req: Request) {
     if (!nombre || !familia_id) {
       return NextResponse.json({ ok: false, error: 'Nombre y familia son obligatorios' }, { status: 400 });
     }
-    const r = await crearSubfamilia({ familia_id, nombre, tipo: 'receta' });
+    const tipo = String(body.tipo || 'receta').trim() === 'subreceta' ? 'subreceta' : 'receta';
+    const r = await crearSubfamilia({ familia_id, nombre, tipo });
     return NextResponse.json(r);
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Error';
