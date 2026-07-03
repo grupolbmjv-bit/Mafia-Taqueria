@@ -1,0 +1,54 @@
+{
+  "project_id": "your-project-id",
+  "region": "us-east-1",
+  "api": {
+    "enabled": true,
+    "schemas": [
+      "public"
+    ],
+    "extra_search_path": [
+      "public"
+    ],
+    "max_rows": 1000
+  },
+  "db": {
+    "seed": {
+      "enabled": true,
+      "file_path": "supabase/seed.sql"
+    }
+  },
+  "realtime": {
+    "enabled": true,
+    "max_bytes_per_second": 1000000
+  },
+  "auth": {
+    "enabled": true,
+    "site_url": "http://localhost:3000",
+    "additional_redirect_urls": [
+      "http://localhost:3000/**",
+      "https://your-domain.com/**"
+    ],
+    "jwt_expiry_limit": 3600,
+    "enable_signup": true,
+    "enable_confirmations": false,
+    "providers": {
+      "google": {
+        "enabled": false
+      },
+      "github": {
+        "enabled": false
+      }
+    }
+  },
+  "storage": {
+    "file_size_limit": 52428800,
+    "allowed_mime_types": [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ]
+  }
+}
