@@ -10,7 +10,7 @@ type Sub = {
   rendimiento?: number;
   unidad_rendimiento_id?: string;
   costo_total?: number;
-  costo_unitario?: number;
+  costo_porcion?: number;
   activo?: boolean | string;
   actualizado_en?: string;
 };
@@ -68,7 +68,7 @@ export default function SubrecetasPage() {
         </div>
         <div className="card p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-salvia-500">Costo prom. por unidad</p>
-          <p className="mt-1 text-2xl font-bold text-ink">{money(filtradas.length ? filtradas.reduce((a, s) => a + (Number(s.costo_unitario) || 0), 0) / filtradas.length : 0)}</p>
+          <p className="mt-1 text-2xl font-bold text-ink">{money(filtradas.length ? filtradas.reduce((a, s) => a + (Number(s.costo_porcion) || 0), 0) / filtradas.length : 0)}</p>
         </div>
         <div className="card p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-salvia-500">Mostrando</p>
@@ -114,7 +114,7 @@ export default function SubrecetasPage() {
                   <td className="px-4 py-2 font-medium text-ink">🥣 {s.nombre}<span className="ml-2 text-[11px] text-salvia-400">{s.id}</span></td>
                   <td className="px-4 py-2 text-right">{num(Number(s.rendimiento) || 0)} {s.unidad_rendimiento_id || ''}</td>
                   <td className="px-4 py-2 text-right">{money(Number(s.costo_total) || 0)}</td>
-                  <td className="px-4 py-2 text-right font-semibold text-[#1E3A5F]">{money(Number(s.costo_unitario) || 0)}</td>
+                  <td className="px-4 py-2 text-right font-semibold text-[#1E3A5F]">{money(Number(s.costo_porcion) || 0)}</td>
                   <td className="px-4 py-2 text-center">
                     {esActivo(s.activo)
                       ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">Activa</span>
