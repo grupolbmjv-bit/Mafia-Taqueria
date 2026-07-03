@@ -28,11 +28,30 @@ function semaforo(fc: number) {
 
 export default async function RecetaDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [receta, subfamilias, familias] = await Promise.all([
-    getReceta(id),
-    getSubfamilias().catch(() => []),
-    getFamilias().catch(() => []),
-  ]);
+  let receta: any, subfamilias: any[] = [], familias: any[] = [];
+  let loadError: string | null = null;
+  try {
+    [receta, subfamilias, familias] = await Promise.all([
+      getReceta(id),
+      getSubfamilias().catch(() => []),
+      getFamilias().catch(() => []),
+    ]);
+  } catch (e) {
+    loadError = e instanceof Error ? e.message : 'Error desconocido';
+  }
+
+  if (loadError) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-16">
+        <div className="rounded-md border border-dashed border-amber-300 bg-amber-50 p-6 text-center text-amber-800">
+          <p className="font-semibold">No se pudo cargar la información.</p>
+          <p className="mt-3 text-salvia-700">{loadError}</p>
+          <p className="mt-1 text-xs text-salvia-500">Verifica que las variables GASTROCORE_API_URL y GASTROCORE_API_TOKEN estén configuradas.</p>
+        </div>
+      </main>
+    );
+  }
+
   if (!receta) notFound();
 
   const sub = subfamilias.find((s: any) => s.id === receta.subfamilia_id);
