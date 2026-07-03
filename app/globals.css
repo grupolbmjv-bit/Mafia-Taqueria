@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #1E3A5F;
+  --brand-hover: #16324D;
+  --accent: #2563EB;
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --danger: #DC2626;
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --line: #E2E8F0;
+  --ink: #0F172A;
+  --muted: #64748B;
+}
+
+@layer base {
+  html {
+    background-color: var(--bg);
+    color: var(--ink);
+  }
+  body {
+    @apply font-sans antialiased;
+    background-color: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  ::selection { background: #DBEAFE; }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border;
+    border-color: var(--line);
+    box-shadow: 0 2px 8px rgba(15,23,42,.05);
+  }
+  .card-hover { transition: box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover {
+    box-shadow: 0 6px 20px rgba(15,23,42,.08);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors;
+    background-color: var(--brand);
+  }
+  .btn-primary:hover { background-color: var(--brand-hover); }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold bg-white transition-colors;
+    color: var(--accent);
+    border: 1px solid #BFDBFE;
+  }
+  .btn-secondary:hover { background-color: #EFF6FF; }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors;
+    color: var(--danger);
+    background-color: #FEF2F2;
+  }
+  .btn-danger:hover { background-color: #FEE2E2; }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-wider;
+    color: var(--muted);
+  }
+
+  .fin-value {
+    @apply font-semibold tabular-nums;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .erp-table { @apply w-full text-[15px]; border-collapse: separate; border-spacing: 0; }
+  .erp-table thead th {
+    @apply text-left text-[12px] font-semibold uppercase tracking-wider px-4 py-3;
+    color: var(--muted);
+    background-color: #F1F5F9;
+    border-bottom: 1px solid var(--line);
+  }
+  .erp-table tbody td {
+    @apply px-4 py-3;
+    border-bottom: 1px solid #F1F5F9;
+    color: var(--ink);
+  }
+  .erp-table tbody tr:hover { background-color: #F8FAFC; }
+  .erp-table tbody tr.is-selected { background-color: #DBEAFE; }
+
+  .progress-track {
+    @apply w-full rounded-full overflow-hidden;
+    height: 8px;
+    background-color: #E2E8F0;
+  }
+  .progress-fill { @apply h-full rounded-full; transition: width .4s ease; }
+
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold; }
+  .chip-success { color: #16A34A; background-color: #DCFCE7; }
+  .chip-warning { color: #B45309; background-color: #FEF3C7; }
+  .chip-danger { color: #DC2626; background-color: #FEE2E2; }
+
+  .ticket-panel {
+    @apply bg-white rounded-xl border p-5 text-sm;
+    border-color: var(--line);
+    color: var(--ink);
+    box-shadow: 0 2px 8px rgba(15,23,42,.05);
+  }
+  .ticket-panel::before, .ticket-panel::after { display: none !important; content: none !important; }
+
+  .ticket-row {
+    @apply flex items-center justify-between py-1 text-sm;
+    color: var(--ink);
+  }
+  .ticket-row span:first-child { color: var(--muted); }
+  .ticket-row span:last-child { @apply font-semibold tabular-nums; }
+
+  .ticket-total {
+    @apply mt-2 flex items-center justify-between rounded-lg px-3 py-2 text-base font-bold tabular-nums;
+    background-color: #F1F5F9;
+  }
+
+  /* ---- Contenedor responsive tipo ERP (SAP Fiori / NetSuite / Odoo) ---- */
+  /* Usa ~92-95% del ancho disponible, sin anchos fijos en px. */
+  .app-shell {
+    width: 100%;
+    max-width: 1800px;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 2vw, 1.5rem);
+  }
+  /* Tope suave solo en monitores ultra-anchos (>= ~2560px) para legibilidad. */
+  @media (min-width: 2560px) {
+    .app-shell { max-width: 2000px; }
+  }
+  @media (max-width: 640px) {
+    .app-shell { max-width: 100%; padding-inline: 0.75rem; }
+  }
+
+  /* Scroll horizontal en tablas solo cuando es estrictamente necesario. */
+  .erp-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Tabla de recetas: la columna Receta ocupa mas ancho y no se parte. */
+  .erp-table.recetas-table { table-layout: auto; }
+  .erp-table.recetas-table th:first-child,
+  .erp-table.recetas-table td:first-child { min-width: 220px; width: 34%; white-space: normal; }
+  .erp-table.recetas-table tbody tr { cursor: pointer; }
+  .erp-table.recetas-table tbody tr:hover { background-color: #EFF6FF; }
+
+}
