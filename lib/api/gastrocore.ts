@@ -174,13 +174,16 @@ export async function getRecetas(all = false): Promise<Receta[]> {
 export async function getReceta(id: string): Promise<Receta | null> {
   // Traemos todas y buscamos por id (el backend no filtra por id de forma fiable),
   // y adjuntamos sus ingredientes desde el recurso 'ingredientes'.
-  const [recetas, ings, insumos, historial] = await Promise.all([
+  const [recetas, subrecetas, ings, insumos, historial] = await Promise.all([
     getRecetas(true),
+    getSubrecetas(true),
     getIngredientesReceta(id),
     getInsumos(),
     getHistorialReceta(id).catch(() => []),
   ]);
-  const receta = recetas.find((x) => x.id === id);
+  // Fallback: si no es una receta normal, puede tratarse de una subreceta
+  // (p.ej. al abrir la vista de Trazabilidad de una subreceta).
+  const receta = recetas.find((x) => String(x.id) === String(id)) || subrecetas.find((x) => String(x.id) === String(id));
   if (!receta) return null;
   const mapaInsumo = new Map(insumos.map((i) => [i.id, i.articulo]));
   receta.ingredientes = ings.map((g) => ({
@@ -202,7 +205,7 @@ export async function getHistorialReceta(recetaId: string): Promise<HistorialRec
 export async function getIngredientesReceta(recetaId: string): Promise<IngredienteReceta[]> {
   const r = await apiGet<IngredienteReceta[]>('ingredientes', { receta_id: recetaId });
   const arr = r.ok && Array.isArray(r.data) ? r.data : [];
-  return arr.filter((g) => !recetaId || g.receta_id === recetaId);
+  return arr.filter((g) => !recetaId || String(g.receta_id) === String(recetaId));
 }
 
 export async function crearReceta(data: Partial<Receta>) {
@@ -267,7 +270,25 @@ export async function getSubrecetas(all = false): Promise<Receta[]> {
   return r.ok && Array.isArray(r.data) ? r.data : [];
 }
 export async function getSubreceta(id: string): Promise<Receta | null> {
-  return getReceta(id);
+  // Antes delegaba en getReceta(id), que solo consultaba el recurso 'recetas'.
+  // Esto provocaba que las subrecetas nunca se encontraran al editarlas,
+  // no aparecieran en Familias ni en Trazabilidad. Ahora se consulta
+  // directamente el recurso 'subrecetas'.
+  const [subrecetas, ings, insumos, historial] = await Promise.all([
+    getSubrecetas(true),
+    getIngredientesReceta(id),
+    getInsumos(),
+    getHistorialReceta(id).catch(() => []),
+  ]);
+  const receta = subrecetas.find((x) => String(x.id) === String(id));
+  if (!receta) return null;
+  const mapaInsumo = new Map(insumos.map((i) => [i.id, i.articulo]));
+  receta.ingredientes = ings.map((g) => ({
+    ...g,
+    nombre_item: mapaInsumo.get(g.item_id) || g.item_id,
+  }));
+  receta.historial = historial;
+  return receta;
 }
 export async function crearSubreceta(data: Partial<Receta>) {
   return apiPost<Receta>('subrecetas', 'create', { data });
