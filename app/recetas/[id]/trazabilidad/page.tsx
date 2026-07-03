@@ -36,6 +36,7 @@ export default function TrazabilidadPage() {
 
   async function cargar() {
     setCargando(true);
+    setMsg(null);
     try {
       const r = await fetch('/api/recetas?id=' + encodeURIComponent(id) + '&_=' + Date.now(), { cache: 'no-store' });
       const j = await r.json();
@@ -43,7 +44,11 @@ export default function TrazabilidadPage() {
         setReceta(j.data);
         const h: Hist[] = (j.data.historial || []).slice().sort((a: Hist, b: Hist) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
         setHist(h);
+      } else {
+        setMsg(j.error || 'No se pudo cargar la información.');
       }
+    } catch {
+      setMsg('No se pudo conectar con el servidor. Intenta nuevamente.');
     } finally { setCargando(false); }
   }
   useEffect(() => { if (id) cargar(); }, [id]);
