@@ -25,13 +25,18 @@ export default function SubrecetasPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [verInactivas, setVerInactivas] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     fetch('/api/subrecetas?all=true', { cache: 'no-store' })
       .then((r) => r.json())
-      .then((d) => { if (d.ok) setSubs(Array.isArray(d.data) ? d.data : []); })
-      .catch(() => {})
+      .then((d) => {
+        if (d.ok) setSubs(Array.isArray(d.data) ? d.data : []);
+        else setError(d.error || 'No se pudo cargar la información.');
+      })
+      .catch(() => setError('No se pudo conectar con el servidor. Intenta nuevamente.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -80,7 +85,11 @@ export default function SubrecetasPage() {
         </label>
       </div>
 
-      {loading ? (
+      {error ? (
+          <div className="rounded-xl border border-dashed border-red-300 bg-red-50 py-12 text-center text-red-700">
+            {error}
+          </div>
+        ) : loading ? (
         <p className="py-10 text-center text-salvia-500">Cargando…</p>
       ) : filtradas.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line py-12 text-center text-salvia-500">
