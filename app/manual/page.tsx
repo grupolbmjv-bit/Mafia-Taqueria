@@ -136,7 +136,7 @@ export default function ManualPage() {
           </section>
 
           <section id="glosario" className="card p-8">
-            <h2 className="text-2xl font-display font-bold text-[var(--ink)]">Glosario de terminos</h2>
+            <h2 className="text-2xl font-display font-bold text-[var(--ink)]">Glosario de términos</h2>
             <div className="mt-4 divide-y divide-[var(--line)]">
               <div className="py-3">
                 <p className="font-semibold text-[var(--ink)]">Food cost</p>
@@ -144,7 +144,7 @@ export default function ManualPage() {
               </div>
               <div className="py-3">
                 <p className="font-semibold text-[var(--ink)]">Food cost objetivo</p>
-                <p className="text-[var(--muted)]">El porcentaje maximo de food cost que la receta deberia tener (35% por defecto).</p>
+                <p className="text-[var(--muted)]">El porcentaje máximo de food cost que la receta debería tener (35% por defecto).</p>
               </div>
               <div className="py-3">
                 <p className="font-semibold text-[var(--ink)]">Precio sugerido</p>
@@ -152,10 +152,10 @@ export default function ManualPage() {
               </div>
               <div className="py-3">
                 <p className="font-semibold text-[var(--ink)]">Merma</p>
-                <p className="text-[var(--muted)]">Porcentaje de producto que se pierde al preparar un ingrediente (limpieza, coccion, corte).</p>
+                <p className="text-[var(--muted)]">Porcentaje de producto que se pierde al preparar un ingrediente (limpieza, cocción, corte).</p>
               </div>
               <div className="py-3">
-                <p className="font-semibold text-[var(--ink)]">Desvio de mercancia</p>
+                <p className="font-semibold text-[var(--ink)]">Desvío de mercancía</p>
                 <p className="text-[var(--muted)]">Porcentaje adicional que cubre diferencias de inventario no explicadas por la merma normal.</p>
               </div>
               <div className="py-3">
@@ -165,6 +165,14 @@ export default function ManualPage() {
               <div className="py-3">
                 <p className="font-semibold text-[var(--ink)]">Utilidad</p>
                 <p className="text-[var(--muted)]">Diferencia entre el precio de venta y el costo total del plato.</p>
+              </div>
+              <div className="py-3">
+                <p className="font-semibold text-[var(--ink)]">Impuesto al Consumo (INC)</p>
+                <p className="text-[var(--muted)]">Impuesto fijo del 8% que ya viene incluido en el precio de venta de cada receta.</p>
+              </div>
+              <div className="py-3">
+                <p className="font-semibold text-[var(--ink)]">Precio base sin impuesto</p>
+                <p className="text-[var(--muted)]">El precio de venta sin el Impuesto al Consumo (precio de venta ÷ 1.08). El food cost se calcula sobre este valor, no sobre el precio de venta total.</p>
               </div>
             </div>
           </section>
