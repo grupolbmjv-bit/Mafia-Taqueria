@@ -226,13 +226,13 @@ export default function RecetarioClient() {
         </header>
 
         <section className="mb-6 dashboard-grid">
-          <Card label="Total recetas" value={String(stats.n)} tone="indigo" icon={<BookOpen size={18} strokeWidth={2} />} />
-          <Card label="Costo promedio" value={money(stats.costoProm)} tone="blue" icon={<DollarSign size={18} strokeWidth={2} />} />
+          <Card label="Total recetas" value={loading ? '…' : String(stats.n)} tone="indigo" icon={<BookOpen size={18} strokeWidth={2} />} />
+          <Card label="Costo promedio" value={loading ? '…' : money(stats.costoProm)} tone="blue" icon={<DollarSign size={18} strokeWidth={2} />} />
           <FoodCostCard fc={stats.fcProm} />
-          <Card label="Rentables" value={String(stats.rentables)} tone="green" icon={<CheckCircle size={18} strokeWidth={2} />} />
-          <Card label="Fuera de objetivo" value={String(stats.fuera)} tone="red" icon={<TriangleAlert size={18} strokeWidth={2} />} />
-          <Card label="Sin precio" value={String(stats.sinPrecio)} tone="amber" icon={<Tag size={18} strokeWidth={2} />} />
-          <Card label="Actualizadas hoy" value={String(stats.actualizadasHoy)} tone="neutral" icon={<CalendarClock size={18} strokeWidth={2} />} />
+          <Card label="Rentables" value={loading ? '…' : String(stats.rentables)} tone="green" icon={<CheckCircle size={18} strokeWidth={2} />} />
+          <Card label="Fuera de objetivo" value={loading ? '…' : String(stats.fuera)} tone="red" icon={<TriangleAlert size={18} strokeWidth={2} />} />
+          <Card label="Sin precio" value={loading ? '…' : String(stats.sinPrecio)} tone="amber" icon={<Tag size={18} strokeWidth={2} />} />
+          <Card label="Actualizadas hoy" value={loading ? '…' : String(stats.actualizadasHoy)} tone="neutral" icon={<CalendarClock size={18} strokeWidth={2} />} />
         </section>
 
         <section className="mb-6 flex flex-wrap items-center gap-4">
