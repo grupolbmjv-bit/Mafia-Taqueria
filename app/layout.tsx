@@ -16,19 +16,20 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'GastroCore \u2014 ERP de Costeo de Recetas',
+  title: 'GastroCore — ERP de Costeo de Recetas',
   description:
     'Plataforma de costeo de recetas para restaurantes. Insumos, recetas, food cost y precios sugeridos.',
 };
 
 const NAV = [
-  { href: '/', label: 'Inicio', icon: '\uD83C\uDFE0' },
-  { href: '/insumos', label: 'Insumos', icon: '\uD83D\uDCE6' },
-  { href: '/subrecetas', label: 'Subrecetas', icon: '\uD83E\uDD63' },
-  { href: '/recetas', label: 'Recetas', icon: '\uD83D\uDCD8' },
-  { href: '/recetas/familias', label: 'Familias', icon: '\uD83D\uDDC2\uFE0F' },
-  { href: '/recetas/resumen', label: 'Panel', icon: '\uD83D\uDCCA' },
-  { href: '/analisis', label: 'An\u00e1lisis', icon: '\uD83D\uDCC8' },
+  { href: '/', label: 'Inicio', icon: '🏠' },
+  { href: '/insumos', label: 'Insumos', icon: '📦' },
+  { href: '/subrecetas', label: 'Subrecetas', icon: '🥣' },
+  { href: '/recetas', label: 'Recetas', icon: '📘' },
+  { href: '/recetas/familias', label: 'Familias', icon: '🗂️' },
+  { href: '/recetas/resumen', label: 'Panel', icon: '📊' },
+  { href: '/analisis', label: 'Análisis', icon: '📈' },
+  { href: '/manual', label: 'Manual', icon: '❓' },
 ];
 
 export default function RootLayout({
