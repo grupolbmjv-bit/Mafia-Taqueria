@@ -562,3 +562,49 @@ export function construirRiesgoMenu(
       const impactoAcumulado = moversSubrecetas.reduce((a, m) => a + Math.max(0, m.variacionAbs), 0) + costoAdicionalGenerado;
       return { recetasEnRiesgo, subrecetasCriticas, costoAdicionalGenerado, impactoAcumulado };
 }
+
+// ---------------------------------------------------------------------------
+// Trazabilidad: arbol expandible INSUMO/SUBRECETA -> SUBRECETA -> RECETA
+// ---------------------------------------------------------------------------
+
+export interface NodoTrazabilidad {
+      id: string;
+      nombre: string;
+      tipo: 'insumo' | 'subreceta' | 'receta';
+      hijos: NodoTrazabilidad[];
+      metricas?: { foodCost: number; utilidad: number; precioSugerido: number; fueraObjetivo: boolean };
+}
+
+export function construirArbolTrazabilidad(itemId: string, tipo: TipoItem, dataset: DatasetCompleto): NodoTrazabilidad {
+      const { insumos, subrecetas, recetas, ingredientes } = dataset;
+      const recetasById = new Map<string, Receta>([...subrecetas, ...recetas].map((r) => [String(r.id), r]));
+      const insumosById = new Map<string, Insumo>(insumos.map((i) => [String(i.id), i]));
+      const padres = buildPadres(ingredientes);
+
+  function construirNodo(id: string, tipoNodo: 'insumo' | 'subreceta' | 'receta', visitados: Set<string>): NodoTrazabilidad {
+          const nombre = tipoNodo === 'insumo' ? insumosById.get(id)?.articulo || id : recetasById.get(id)?.nombre || id;
+          const hijosIds = (padres.get(id) || []).filter((h) => !visitados.has(h));
+          const nuevosVisitados = new Set(visitados);
+          nuevosVisitados.add(id);
+          const hijos = hijosIds.map((hid) => construirNodo(hid, idEsSubreceta(hid) ? 'subreceta' : 'receta', nuevosVisitados));
+          let metricas: NodoTrazabilidad['metricas'];
+          if (tipoNodo === 'receta') {
+                    const rec = recetasById.get(id);
+                    if (rec) {
+                                const fcObj = foodCostObjetivoDe(rec);
+                                const precioReal = sanitizePrecio(rec.precio_real);
+                                const cp = Number(rec.costo_porcion) || 0;
+                                const fc = foodCost(cp, precioReal);
+                                metricas = {
+                                              foodCost: fc,
+                                              utilidad: calcUtilidad(precioReal, cp),
+                                              precioSugerido: calcPrecioSugerido(cp, fcObj),
+                                              fueraObjetivo: fc > fcObj,
+                                };
+                    }
+          }
+          return { id, nombre, tipo: tipoNodo, hijos, metricas };
+  }
+
+  return construirNodo(itemId, tipo === 'insumo' ? 'insumo' : 'subreceta', new Set());
+}
