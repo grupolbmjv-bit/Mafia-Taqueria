@@ -16,7 +16,7 @@ export default async function AnalisisPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
+    <main className="app-shell py-8">
       <header className="mb-6">
         <h1 className="font-display text-3xl font-bold text-ambar-700">
           📈 Análisis de Variación de Costos
