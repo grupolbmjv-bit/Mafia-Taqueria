@@ -5,6 +5,8 @@ import { calculateCostImpact, construirArbolTrazabilidad } from '@/lib/costImpac
 import type { AnalysisData, DatasetCompleto, MoverInsumo, MoverReceta, NodoTrazabilidad, CostImpactResult } from '@/lib/costImpact';
 
 const money = (n: number) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0);
+
 const pct = (n: number) => (n >= 0 ? '+' : '') + (n || 0).toFixed(1) + '%';
 
 const fechaCorta = (v: string) => {
@@ -107,7 +109,7 @@ function MoverList({ items, icono }: { items: { id: string; nombre: string; vari
 }
 
 const alertaColor = (n: string) => (n === 'rojo' ? 'border-red-200 bg-red-50 text-red-700' : n === 'amarillo' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-green-200 bg-green-50 text-green-700');
-const alertaIcono = (n: string) => (n === 'rojo' ? '' : n === 'amarillo' ? '' : '');
+const alertaIcono = (n: string) => (n === 'rojo' ? 'ALTO' : n === 'amarillo' ? 'MEDIO' : 'BAJO');
 const categoriaLabel = (c: string) => ({ insumo: 'Insumo', subreceta: 'Subreceta', receta: 'Receta', utilidad: 'Utilidad', food_cost: 'Food Cost', margen: 'Margen' } as Record<string, string>)[c] || c;
 
 function NodoArbol({ nodo }: { nodo: NodoTrazabilidad }) {
