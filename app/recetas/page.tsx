@@ -225,7 +225,7 @@ export default function RecetarioClient() {
           </div>
         </header>
 
-        <section className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-4">
+        <section className="mb-6 dashboard-grid">
           <Card label="Total recetas" value={String(stats.n)} tone="indigo" icon={<BookOpen size={18} strokeWidth={2} />} />
           <Card label="Costo promedio" value={money(stats.costoProm)} tone="blue" icon={<DollarSign size={18} strokeWidth={2} />} />
           <FoodCostCard fc={stats.fcProm} />
