@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import SearchableSelect from '@/components/SearchableSelect';
-import { precioSugerido as precioSugeridoObjetivo, FC_OBJ, INC } from '@/lib/costeo';
+import { costearReceta } from '@/lib/costeo';
 import { BookOpen, DollarSign, CheckCircle, TriangleAlert, Tag, CalendarClock } from 'lucide-react';
 
 type Receta = any;
@@ -136,7 +136,7 @@ export default function RecetarioClient() {
       }
       if (estadoSel === 'activos' && !esActivo(r)) return false;
       if (estadoSel === 'inactivos' && esActivo(r)) return false;
-      const fc = Number(r.food_cost) || 0;
+              const fc = costearReceta(r).foodCost;
       if (fcSel === 'verde' && !(fc <= 0.33)) return false;
       if (fcSel === 'amarillo' && !(fc > 0.33 && fc <= 0.35)) return false;
       if (fcSel === 'rojo' && !(fc > 0.35)) return false;
@@ -158,10 +158,10 @@ export default function RecetarioClient() {
     const act = recetas.filter(esActivo);
     const n = act.length;
     const costoProm = n ? act.reduce((a, r) => a + (Number(r.costo_porcion) || 0), 0) / n : 0;
-    const conFc = act.filter((r) => Number(r.food_cost) > 0);
-    const fcProm = conFc.length ? conFc.reduce((a, r) => a + Number(r.food_cost), 0) / conFc.length : 0;
-    const rentables = act.filter((r) => Number(r.food_cost) > 0 && Number(r.food_cost) <= 0.35).length;
-    const fuera = act.filter((r) => Number(r.food_cost) > 0.35).length;
+    const conFc = act.map((r) => costearReceta(r).foodCost).filter((fc) => fc > 0);
+        const fcProm = conFc.length ? conFc.reduce((a, fc) => a + fc, 0) / conFc.length : 0;
+        const rentables = act.filter((r) => { const fc = costearReceta(r).foodCost; return fc > 0 && fc <= 0.35; }).length;
+        const fuera = act.filter((r) => costearReceta(r).foodCost > 0.35).length;
     const sinPrecio = act.filter((r) => !(Number(r.precio_real) > 0)).length;
     const hoy = new Date().toISOString().slice(0, 10);
     const actualizadasHoy = act.filter((r) => String(r.actualizado_en || '').slice(0, 10) === hoy).length;
@@ -297,9 +297,10 @@ export default function RecetarioClient() {
                     </thead>
                     <tbody>
                       {items.map((r) => {
-                        const fc = Number(r.food_cost);
-                        const sinPrecio = !(Number(r.precio_real) > 0);
-                        const sugerido = precioSugeridoObjetivo(Number(r.costo_porcion));
+                            const m = costearReceta(r);
+                    const fc = m.foodCost;
+                    const sinPrecio = !(Number(r.precio_real) > 0);
+                    const sugerido = m.precioSugerido;
                         return (
                         <tr
                           key={r.id}
