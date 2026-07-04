@@ -52,7 +52,7 @@ export default function SubrecetasPage() {
   const totalActivas = subs.filter((s) => esActivo(s.activo)).length;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6">
+    <main className="app-shell py-6">
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-ambar-700">Subrecetas · Preparaciones base</h1>
@@ -61,7 +61,7 @@ export default function SubrecetasPage() {
         <Link href="/subrecetas/nueva" className="rounded-lg bg-ambar-600 px-4 py-2 text-sm font-semibold text-white hover:bg-ambar-700">+ Nueva subreceta</Link>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+      <div className="mb-4 dashboard-grid">
         <div className="card p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-salvia-500">Total subrecetas</p>
           <p className="mt-1 text-2xl font-bold text-ink">{totalActivas}</p>
