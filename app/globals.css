@@ -152,4 +152,10 @@
   .erp-table.recetas-table tbody tr { cursor: pointer; }
   .erp-table.recetas-table tbody tr:hover { background-color: #EFF6FF; }
 
+    /* Grid fluido para tarjetas de dashboard: se auto-ajusta al ancho disponible. */
+    .dashboard-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+
+    /* Grid fluido para formularios: mas columnas en desktop, menos en pantallas chicas. */
+    .form-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
 }
