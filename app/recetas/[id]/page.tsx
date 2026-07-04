@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getReceta, getSubfamilias, getFamilias } from '@/lib/api/gastrocore';
-import { foodCost as calcFoodCost, precioSugerido as calcPrecioSugerido, utilidad as calcUtilidad, margenBruto as calcMargenBruto } from '@/lib/costeo';
+import { foodCost as calcFoodCost, precioSugerido as calcPrecioSugerido, utilidad as calcUtilidad, margenBruto as calcMargenBruto, foodCostObjetivoDe } from '@/lib/costeo';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,9 +70,9 @@ export default async function RecetaDetallePage({ params }: { params: Promise<{ 
   const costoFinal = Number(receta.costo_total) || costoIngredientes + desvioValor;
   const costoPorcion = Number(receta.costo_porcion) || costoFinal / rendimiento;
   const precioReal = Number(receta.precio_real) || 0;
-  const precioSugerido = Number(receta.precio_sugerido) || 0;
-  const _mo = Number(receta.margen_objetivo) || 0;
-  const margenObj = _mo > 1 ? _mo / 100 : _mo;
+    const foodCostObjetivo = foodCostObjetivoDe(receta);
+    const precioSugerido = calcPrecioSugerido(costoPorcion, foodCostObjetivo);
+
   // Fuente unica de verdad (lib/costeo): Food Cost = costo / precio base sin impuesto.
   const foodCost = precioReal > 0 ? calcFoodCost(costoPorcion, precioReal) : Number(receta.food_cost) || 0;
   const utilidad = calcUtilidad(precioReal, costoPorcion);
@@ -233,7 +233,7 @@ export default async function RecetaDetallePage({ params }: { params: Promise<{ 
               <Row label="Desvio de mercancia" value={`${num(desvioPct, 1)}%`} sub={money2(desvioValor)} />
               <Row label="Costo total del plato" value={money(costoFinal)} strong />
               <div className="my-2 border-t border-salvia-100" />
-              <Row label="Food Cost objetivo" value={fcPct(margenObj)} />
+              <Row label="Food Cost objetivo" value={fcPct(foodCostObjetivo)} />
               <Row label="Precio sugerido" value={money(precioSugerido)} />
               <Row label="Precio real de venta" value={precioReal > 0 ? money(precioReal) : 'Sin precio'} />
               <Row label="Food Cost real" value={fcPct(foodCost)} accent={s.text} strong />
