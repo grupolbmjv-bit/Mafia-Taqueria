@@ -26,7 +26,7 @@ const num = (n: any): number => Number(n) || 0;
  * hoja de calculo (ej. "$ 8.900", "8,900", " 8900 "). Nunca debe llegar un
  * string sin limpiar a una operacion aritmetica.
  */
-const sanitizePrecio = (n: any): number => {
+export const sanitizePrecio = (n: any): number => {
     if (typeof n === 'number') return isFinite(n) ? n : 0;
     if (n === null || n === undefined || n === '') return 0;
     const limpio = String(n).replace(/[$.,\s]/g, '');
