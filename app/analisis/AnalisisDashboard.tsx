@@ -22,6 +22,12 @@ function riesgoSim(fc: number) {
   return { emoji: '', label: 'Accion', bg: 'bg-[#FEE2E2]', text: 'text-[#DC2626]', border: 'border-[#FECACA]', dot: '#DC2626' };
 }
 
+// ---------------------------------------------------------------------------
+// Exportes: CSV (nativo), Excel (xlsx) y PDF (jspdf) para los 4 datasets del
+// modulo. Las tres funciones reciben las mismas filas (encabezado + datos)
+// para no duplicar la construccion de los reportes.
+// ---------------------------------------------------------------------------
+
 function descargarCSV(nombre: string, filas: (string | number)[][]) {
   const csv = filas.map((f) => f.map((c) => {
     const s = String(c ?? '');
@@ -34,6 +40,44 @@ function descargarCSV(nombre: string, filas: (string | number)[][]) {
   a.download = nombre + '.csv';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+async function descargarExcel(nombre: string, filas: (string | number)[][]) {
+  const XLSX = await import('xlsx');
+  const ws = XLSX.utils.aoa_to_sheet(filas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+  XLSX.writeFile(wb, nombre + '.xlsx');
+}
+
+async function descargarPDF(nombre: string, titulo: string, filas: (string | number)[][]) {
+  const { jsPDF } = await import('jspdf');
+  const autoTableModule = await import('jspdf-autotable');
+  const autoTable = autoTableModule.default;
+  const doc = new jsPDF({ orientation: filas[0] && filas[0].length > 5 ? 'landscape' : 'portrait' });
+  doc.setFontSize(13);
+  doc.text(titulo, 14, 15);
+  doc.setFontSize(8);
+  doc.text('Generado: ' + new Date().toLocaleString('es-CO'), 14, 21);
+  autoTable(doc, {
+    head: [filas[0].map((c) => String(c))],
+    body: filas.slice(1).map((f) => f.map((c) => String(c))),
+    startY: 26,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [180, 83, 9] },
+  });
+  doc.save(nombre + '.pdf');
+}
+
+function BotonesExport({ filas, titulo, nombreArchivo }: { filas: (string | number)[][]; titulo: string; nombreArchivo: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="mr-1 text-xs font-semibold text-ambar-700">{titulo}:</span>
+      <button onClick={() => descargarCSV(nombreArchivo, filas)} className="rounded-md border border-line px-2.5 py-1 text-[11px] font-medium text-ink hover:bg-slate-50">CSV</button>
+      <button onClick={() => descargarExcel(nombreArchivo, filas)} className="rounded-md border border-line px-2.5 py-1 text-[11px] font-medium text-ink hover:bg-slate-50">Excel</button>
+      <button onClick={() => descargarPDF(nombreArchivo, titulo, filas)} className="rounded-md border border-line px-2.5 py-1 text-[11px] font-medium text-ink hover:bg-slate-50">PDF</button>
+    </div>
+  );
 }
 
 function BarraVar({ value, max }: { value: number; max: number }) {
@@ -92,6 +136,23 @@ function BarChart({ data }: { data: { label: string; value: number }[] }) {
   );
 }
 
+/** Igual que BarChart pero para montos economicos (Impacto por receta / Impacto por subreceta). */
+function BarChartValor({ data }: { data: { label: string; value: number }[] }) {
+  if (!data.length) return <p className="py-6 text-center text-sm text-muted">Sin impacto economico registrado.</p>;
+  const max = Math.max(...data.map((d) => Math.abs(d.value)), 1);
+  return (
+    <div className="space-y-2">
+      {data.map((d) => (
+        <div key={d.label} className="flex items-center gap-2">
+          <span className="w-32 shrink-0 truncate text-xs text-ink" title={d.label}>{d.label}</span>
+          <div className="flex-1"><BarraVar value={d.value} max={max} /></div>
+          <span className={'w-24 shrink-0 text-right text-xs font-semibold ' + (d.value >= 0 ? 'text-red-600' : 'text-green-700')}>{money(d.value)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MoverList({ items, icono }: { items: { id: string; nombre: string; variacionPct: number }[]; icono: string }) {
   if (!items.length) return <p className="text-sm text-muted">Sin variaciones registradas.</p>;
   const max = Math.max(...items.map((t) => Math.abs(t.variacionPct)), 1);
@@ -122,7 +183,7 @@ function NodoArbol({ nodo }: { nodo: NodoTrazabilidad }) {
         <span className="ml-2 text-xs text-muted">({nodo.tipo})</span>
         {nodo.metricas && (
           <span className={'ml-2 text-xs font-semibold ' + (nodo.metricas.fueraObjetivo ? 'text-red-600' : 'text-green-700')}>
-            Food Cost {(nodo.metricas.foodCost * 100).toFixed(1)}%  -  Utilidad {money(nodo.metricas.utilidad)}  -  Precio sug. {money(nodo.metricas.precioSugerido)}
+            Food Cost {(nodo.metricas.foodCost * 100).toFixed(1)}% - Utilidad {money(nodo.metricas.utilidad)} - Precio sug. {money(nodo.metricas.precioSugerido)}
           </span>
         )}
       </summary>
@@ -237,7 +298,7 @@ function Simulador({ dataset }: { dataset: DatasetCompleto }) {
       {resultado && (
         <div className="mt-4 border-t border-line pt-4">
           <p className="mb-3 text-sm">
-            <span className="font-semibold">{resultado.insumo}</span>: {money(resultado.costoAnterior)}  ->  {money(resultado.costoNuevo)}{' '}
+            <span className="font-semibold">{resultado.insumo}</span>: {money(resultado.costoAnterior)} -&gt; {money(resultado.costoNuevo)}{' '}
             <span className={resultado.porcentajeVariacion >= 0 ? 'text-red-600' : 'text-green-700'}>({pct(resultado.porcentajeVariacion)})</span>
           </p>
 
@@ -290,20 +351,20 @@ function Simulador({ dataset }: { dataset: DatasetCompleto }) {
                   {resultado.recetasAfectadas.map((r) => {
                     const rg = riesgoSim(r.foodCostNuevo);
                     return (
-                    <tr key={r.id} className={r.fueraObjetivo ? 'bg-red-50/60' : ''}>
-                      <td className="font-medium">{r.nombre}</td>
-                      <td className="text-right">{money(r.costoAnterior)}</td>
-                      <td className="text-right">{money(r.costoNuevo)}</td>
-                      <td className={'text-right font-semibold ' + rg.text}>{(r.foodCostNuevo * 100).toFixed(1)}%</td>
-                      <td className="text-right">{money(r.utilidadNueva)}</td>
-                      <td className={'text-right font-semibold ' + (r.fueraObjetivo ? 'text-[#DC2626]' : 'text-[#16A34A]')}>{money(r.precioSugeridoNuevo)}</td>
-                      <td className="text-center">
-                        <span className={'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ' + rg.bg + ' ' + rg.text + ' ' + rg.border}>
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: rg.dot }} />
-                          {rg.label}
-                        </span>
-                      </td>
-                    </tr>
+                      <tr key={r.id} className={r.fueraObjetivo ? 'bg-red-50/60' : ''}>
+                        <td className="font-medium">{r.nombre}</td>
+                        <td className="text-right">{money(r.costoAnterior)}</td>
+                        <td className="text-right">{money(r.costoNuevo)}</td>
+                        <td className={'text-right font-semibold ' + rg.text}>{(r.foodCostNuevo * 100).toFixed(1)}%</td>
+                        <td className="text-right">{money(r.utilidadNueva)}</td>
+                        <td className={'text-right font-semibold ' + (r.fueraObjetivo ? 'text-[#DC2626]' : 'text-[#16A34A]')}>{money(r.precioSugeridoNuevo)}</td>
+                        <td className="text-center">
+                          <span className={'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ' + rg.bg + ' ' + rg.text + ' ' + rg.border}>
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: rg.dot }} />
+                            {rg.label}
+                          </span>
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
@@ -315,6 +376,7 @@ function Simulador({ dataset }: { dataset: DatasetCompleto }) {
     </div>
   );
 }
+
 function MatrizImpacto({ dataset, analysis }: { dataset: DatasetCompleto; analysis: AnalysisData }) {
   const candidatos = useMemo(() => [
     ...analysis.moversInsumos.filter((m) => m.variacionAbs !== 0).map((m) => ({ id: m.id, nombre: m.articulo, tipo: 'insumo' as const, variacionPct: m.variacionPct, costoAnterior: m.costoAnterior, costoNuevo: m.costoActual })),
@@ -404,19 +466,19 @@ function MatrizImpacto({ dataset, analysis }: { dataset: DatasetCompleto; analys
 export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analysis: AnalysisData; dataset: DatasetCompleto; evolucionCosto: { fecha: string; costo_promedio: number }[] }) {
   const [tab, setTab] = useState<'resumen' | 'trazabilidad' | 'impacto' | 'matriz' | 'simular'>('resumen');
 
-  const exportInsumos = () => descargarCSV('historial_precios_insumos', [
+  const insumosFilas: (string | number)[][] = [
     ['Insumo', 'Referencia', 'Costo base', 'Costo actual', 'Variacion abs', 'Variacion %', 'Cambios'],
     ...analysis.moversInsumos.map((m) => [m.articulo, m.referencia, m.costoAnterior, m.costoActual, m.variacionAbs, m.variacionPct.toFixed(2), m.cambios]),
-  ]);
-  const exportSubrecetas = () => descargarCSV('impacto_subrecetas', [
+  ];
+  const subrecetasFilas: (string | number)[][] = [
     ['Subreceta', 'Costo anterior', 'Costo nuevo', 'Variacion %', 'Recetas donde participa', 'Impacto economico'],
     ...analysis.impactoSubrecetas.map((s) => [s.nombre, s.costoAnterior, s.costoNuevo, s.variacionPct.toFixed(2), s.recetasQueLaUsan, Math.round(s.impactoEconomico)]),
-  ]);
-  const exportRecetas = () => descargarCSV('impacto_recetas', [
+  ];
+  const recetasFilas: (string | number)[][] = [
     ['Receta', 'Costo anterior', 'Costo nuevo', 'Nuevo Food Cost %', 'Utilidad nueva', 'Precio sugerido nuevo', 'Fuera de objetivo'],
     ...analysis.impactoMenu.map((r) => [r.nombre, r.costoAnterior, r.costoNuevo, (r.foodCostNuevo * 100).toFixed(1), Math.round(r.utilidadNueva), Math.round(r.precioSugeridoNuevo), r.fueraObjetivo ? 'SI' : 'NO']),
-  ]);
-  const exportGlobal = () => descargarCSV('impacto_global_menu', [
+  ];
+  const globalFilas: (string | number)[][] = [
     ['Metrica', 'Valor'],
     ['Recetas en riesgo', analysis.riesgoMenu.recetasEnRiesgo],
     ['Subrecetas criticas', analysis.riesgoMenu.subrecetasCriticas],
@@ -426,7 +488,7 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
     ['Variacion promedio subrecetas %', analysis.variacionPromedio.subrecetas.toFixed(2)],
     ['Variacion promedio recetas %', analysis.variacionPromedio.recetas.toFixed(2)],
     ['Variacion promedio global %', analysis.variacionPromedio.global.toFixed(2)],
-  ]);
+  ];
 
   return (
     <div className="space-y-6">
@@ -437,6 +499,9 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
             <>
               <p className="mt-1 truncate font-semibold text-ink" title={analysis.insumoMasInflacionario.articulo}> {analysis.insumoMasInflacionario.articulo}</p>
               <p className="text-2xl font-bold text-red-600">{pct(analysis.insumoMasInflacionario.variacionPct)}</p>
+              <p className="mt-1 text-[11px] text-muted">{money(analysis.insumoMasInflacionario.costoAnterior)} -&gt; {money(analysis.insumoMasInflacionario.costoActual)}</p>
+              <p className="text-[11px] text-muted">{analysis.insumoMasInflacionario.recetasAfectadas} receta(s) - {analysis.insumoMasInflacionario.subrecetasAfectadas} subreceta(s) afectadas</p>
+              <p className="text-[11px] font-semibold text-red-600">Impacto: {money(analysis.insumoMasInflacionario.impactoEconomico)}</p>
             </>
           ) : <p className="mt-1 text-muted">N/A</p>}
         </div>
@@ -446,6 +511,9 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
             <>
               <p className="mt-1 truncate font-semibold text-ink" title={analysis.subrecetaMasAfectada.nombre}> {analysis.subrecetaMasAfectada.nombre}</p>
               <p className="text-2xl font-bold text-red-600">{pct(analysis.subrecetaMasAfectada.variacionPct)}</p>
+              <p className="mt-1 text-[11px] text-muted">{money(analysis.subrecetaMasAfectada.costoAnterior)} -&gt; {money(analysis.subrecetaMasAfectada.costoNuevo)}</p>
+              <p className="text-[11px] text-muted">{analysis.subrecetaMasAfectada.recetasQueLaUsan} receta(s) donde participa</p>
+              <p className="text-[11px] font-semibold text-red-600">Impacto: {money(analysis.subrecetaMasAfectada.impactoEconomico)}</p>
             </>
           ) : <p className="mt-1 text-muted">N/A</p>}
         </div>
@@ -455,18 +523,22 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
             <>
               <p className="mt-1 truncate font-semibold text-ink" title={analysis.recetaMasAfectada.nombre}> {analysis.recetaMasAfectada.nombre}</p>
               <p className="text-2xl font-bold text-red-600">{money(analysis.recetaMasAfectada.variacionAbs)}</p>
+              <p className="mt-1 text-[11px] text-muted">{money(analysis.recetaMasAfectada.costoAnterior)} -&gt; {money(analysis.recetaMasAfectada.costoNuevo)}</p>
+              <p className="text-[11px] text-muted">Food Cost {(analysis.recetaMasAfectada.foodCostAnterior * 100).toFixed(1)}% -&gt; {(analysis.recetaMasAfectada.foodCostNuevo * 100).toFixed(1)}%</p>
+              <p className="text-[11px] text-muted">Utilidad perdida: {money(analysis.recetaMasAfectada.utilidadPerdida)}</p>
+              <p className="text-[11px] font-semibold text-ink">Precio sug. nuevo: {money(analysis.recetaMasAfectada.precioSugeridoNuevo)}</p>
             </>
           ) : <p className="mt-1 text-muted">N/A</p>}
         </div>
         <div className="card p-4">
           <p className="text-xs uppercase tracking-wide text-salvia-600">Variacion promedio de costos</p>
           <p className={'mt-1 text-3xl font-bold ' + (analysis.variacionPromedio.global >= 0 ? 'text-red-600' : 'text-green-700')}>{pct(analysis.variacionPromedio.global)}</p>
-          <p className="mt-1 text-[11px] text-muted">Insumos {pct(analysis.variacionPromedio.insumos)}  -  Subrecetas {pct(analysis.variacionPromedio.subrecetas)}  -  Recetas {pct(analysis.variacionPromedio.recetas)}</p>
+          <p className="mt-1 text-[11px] text-muted">Insumos {pct(analysis.variacionPromedio.insumos)} - Subrecetas {pct(analysis.variacionPromedio.subrecetas)} - Recetas {pct(analysis.variacionPromedio.recetas)}</p>
         </div>
         <div className="card p-4">
           <p className="text-xs uppercase tracking-wide text-salvia-600">Riesgo del menu</p>
           <p className="mt-1 text-2xl font-bold text-amber-600">{analysis.riesgoMenu.recetasEnRiesgo} recetas</p>
-          <p className="text-[11px] text-muted">{analysis.riesgoMenu.subrecetasCriticas} subreceta(s) critica(s)  -  costo adicional {money(analysis.riesgoMenu.costoAdicionalGenerado)}</p>
+          <p className="text-[11px] text-muted">{analysis.riesgoMenu.subrecetasCriticas} subreceta(s) critica(s) - costo adicional {money(analysis.riesgoMenu.costoAdicionalGenerado)}</p>
           <p className="mt-1 text-[10px] italic text-muted">Impacto mensual no disponible: el sistema no registra volumen de ventas.</p>
         </div>
       </section>
@@ -487,13 +559,11 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
       )}
 
       <section className="card p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-2 text-sm font-semibold text-ambar-700"> Reportes:</span>
-          <button onClick={exportInsumos} className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-slate-50">Historial de precios (Excel)</button>
-          <button onClick={exportSubrecetas} className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-slate-50">Impacto en subrecetas (Excel)</button>
-          <button onClick={exportRecetas} className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-slate-50">Impacto en recetas (Excel)</button>
-          <button onClick={exportGlobal} className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-slate-50">Impacto global (Excel)</button>
-          <button onClick={() => window.print()} className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-slate-50">Exportar PDF (imprimir)</button>
+        <div className="space-y-2.5">
+          <BotonesExport titulo="Insumos" nombreArchivo="historial_precios_insumos" filas={insumosFilas} />
+          <BotonesExport titulo="Subrecetas" nombreArchivo="impacto_subrecetas" filas={subrecetasFilas} />
+          <BotonesExport titulo="Recetas" nombreArchivo="impacto_recetas" filas={recetasFilas} />
+          <BotonesExport titulo="Impacto global" nombreArchivo="impacto_global_menu" filas={globalFilas} />
         </div>
       </section>
 
@@ -534,6 +604,16 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
             <section className="card p-5">
               <h3 className="mb-3 font-semibold text-ink">Evolucion semanal del costo promedio</h3>
               <LineChart points={evolucionCosto.map((e) => ({ x: e.fecha, y: e.costo_promedio }))} label="Costo promedio" />
+            </section>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section className="card p-5">
+              <h3 className="mb-3 font-semibold text-ink">Impacto economico por receta</h3>
+              <BarChartValor data={analysis.impactoMenu.slice(0, 10).map((r) => ({ label: r.nombre, value: r.impactoEconomico }))} />
+            </section>
+            <section className="card p-5">
+              <h3 className="mb-3 font-semibold text-ink">Impacto economico por subreceta</h3>
+              <BarChartValor data={analysis.impactoSubrecetas.slice(0, 10).map((s) => ({ label: s.nombre, value: s.impactoEconomico }))} />
             </section>
           </div>
         </div>
