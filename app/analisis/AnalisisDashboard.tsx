@@ -5,8 +5,6 @@ import { calculateCostImpact, construirArbolTrazabilidad } from '@/lib/costImpac
 import type { AnalysisData, DatasetCompleto, MoverInsumo, MoverReceta, NodoTrazabilidad, CostImpactResult } from '@/lib/costImpact';
 
 const money = (n: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0);
-
 const pct = (n: number) => (n >= 0 ? '+' : '') + (n || 0).toFixed(1) + '%';
 
 const fechaCorta = (v: string) => {
