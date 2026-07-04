@@ -96,7 +96,7 @@ export default function TrazabilidadPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 print:max-w-none">
+    <main className="app-shell py-6 print:max-w-none">
       <div className="mb-5 flex items-center justify-between print:hidden">
         <div>
           <h1 className="font-display text-2xl font-bold text-ambar-700">Trazabilidad completa</h1>
