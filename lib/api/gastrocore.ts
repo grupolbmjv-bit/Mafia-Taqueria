@@ -444,3 +444,24 @@ export async function simularImpacto(insumoId: string, nuevoPrecio: number): Pro
 export async function generarSnapshot(usuario?: string) {
   return apiPost('analytics', 'snapshot', { data: { usuario: usuario || 'Sistema' } });
 }
+
+
+// ---------- BI / TRAZABILIDAD COMPLETA: dataset crudo para lib/costImpact.ts ----------
+// Estas funciones traen TODAS las filas (sin filtrar por id) para que el
+// servicio central `calculateCostImpact()` pueda reconstruir el grafo
+// completo insumo -> subreceta -> receta. Solo se ejecutan en el servidor.
+
+export async function getAllPreciosHistoricos(): Promise<HistorialInsumo[]> {
+    const r = await apiGet<HistorialInsumo[]>('preciosHistoricos');
+    return r.ok && Array.isArray(r.data) ? r.data : [];
+}
+
+export async function getAllHistorialRecetas(): Promise<HistorialReceta[]> {
+    const r = await apiGet<HistorialReceta[]>('historialRecetas');
+    return r.ok && Array.isArray(r.data) ? r.data : [];
+}
+
+export async function getAllIngredientes(): Promise<IngredienteReceta[]> {
+    const r = await apiGet<IngredienteReceta[]>('ingredientes');
+    return r.ok && Array.isArray(r.data) ? r.data : [];
+}
