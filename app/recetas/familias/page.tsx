@@ -206,7 +206,7 @@ export default function FamiliasRecetasPage() {
     subfamilias.filter((s) => String(s.familia_id) === String(fid) && esReceta(s.tipo) && esActivo(s.activo));
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
+    <div className="app-shell py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ambar-800">Familias de platos de venta</h1>
