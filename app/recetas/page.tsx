@@ -15,7 +15,7 @@ const money = (n: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0);
 const fcPct = (n: number) => ((Number(n) || 0) * 100).toFixed(1) + '%';
 
-// FC_OBJ, INC y precioSugeridoObjetivo provienen de la fuente unica (lib/costeo).
+// Food Cost y Precio sugerido se calculan en vivo con costearReceta() (fuente unica: lib/costeo).
 
 function semaforo(fc: number) {
   const v = Number(fc) || 0;
