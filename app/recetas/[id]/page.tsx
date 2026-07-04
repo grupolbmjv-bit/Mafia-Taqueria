@@ -80,7 +80,7 @@ export default async function RecetaDetallePage({ params }: { params: Promise<{ 
   const s = semaforo(foodCost);
 
   return (
-    <main className="mx-auto w-[95%] max-w-[1800px] px-4 py-6 lg:px-6">
+    <main className="app-shell py-6">
       <div className="mb-4 flex items-center gap-2 text-sm text-salvia-500">
         <Link href="/recetas" className="hover:text-ambar-700">Recetario</Link>
         <span>/</span>
