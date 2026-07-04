@@ -407,8 +407,23 @@ export type SnapshotSemanal = {
 export type PuntoHistorial = { fecha: string; coste: number; motivo?: string };
 
 export async function getAnalytics(): Promise<AnalyticsData | null> {
-  const r = await apiGet<AnalyticsData>('analytics');
-  return r.ok ? r.data : null;
+    const r = await apiGet<Partial<AnalyticsData>>('analytics');
+    if (!r.ok || !r.data) return null;
+    const d = r.data;
+    return {
+          generado_en: d.generado_en ?? '',
+          food_cost_objetivo: Number(d.food_cost_objetivo) || 0,
+          top_aumentos: Array.isArray(d.top_aumentos) ? d.top_aumentos : [],
+          top_reducciones: Array.isArray(d.top_reducciones) ? d.top_reducciones : [],
+          impacto_menu: Array.isArray(d.impacto_menu) ? d.impacto_menu : [],
+          variacion_familia: Array.isArray(d.variacion_familia) ? d.variacion_familia : [],
+          indicadores: d.indicadores ?? { insumo_mas_inflacionario: null, receta_mas_afectada: null, variacion_promedio: 0, recetas_fuera_objetivo: 0 },
+          evolucion_costo: Array.isArray(d.evolucion_costo) ? d.evolucion_costo : [],
+          food_cost_promedio: Number(d.food_cost_promedio) || 0,
+          alertas: Array.isArray(d.alertas) ? d.alertas : [],
+          total_insumos: Number(d.total_insumos) || 0,
+          insumos_con_variacion: Number(d.insumos_con_variacion) || 0,
+    };
 }
 
 export async function getHistorialInsumoGrafica(insumoId: string): Promise<PuntoHistorial[]> {
