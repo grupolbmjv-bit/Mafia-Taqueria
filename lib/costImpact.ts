@@ -12,17 +12,9 @@
 // ============================================================================
 
 import type { Insumo, Receta, IngredienteReceta, HistorialReceta, HistorialInsumo, Familia, Subfamilia } from './api/gastrocore';
-import { foodCost, precioSugerido as calcPrecioSugerido, utilidad as calcUtilidad, foodCostObjetivoDe } from './costeo';
+import { foodCost, precioSugerido as calcPrecioSugerido, utilidad as calcUtilidad, foodCostObjetivoDe, sanitizePrecio } from './costeo';
 
 export type TipoItem = 'insumo' | 'subreceta';
-
-const sanitizePrecio = (n: any): number => {
-    if (typeof n === 'number') return isFinite(n) ? n : 0;
-    if (n === null || n === undefined || n === '') return 0;
-    const limpio = String(n).replace(/[$.,\s]/g, '');
-    const parsed = Number(limpio);
-    return isFinite(parsed) ? parsed : 0;
-};
 
 const idEsSubreceta = (id: string) => String(id).indexOf('SUB-') === 0;
 const idEsReceta = (id: string) => String(id).indexOf('REC-') === 0;
