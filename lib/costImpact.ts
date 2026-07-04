@@ -608,3 +608,116 @@ export function construirArbolTrazabilidad(itemId: string, tipo: TipoItem, datas
 
   return construirNodo(itemId, tipo === 'insumo' ? 'insumo' : 'subreceta', new Set());
 }
+
+// ---------------------------------------------------------------------------
+// Orquestador principal: buildAnalysisData()
+// Unico punto de entrada que debe consumir la pantalla de Analisis (resumen,
+// alertas, top 10, impacto en el menu/subrecetas, riesgo del menu). Internamente
+// reutiliza calculateCostImpact() para consolidar el impacto en cascada de
+// cada insumo/subreceta con variacion historica; no duplica formulas.
+// ---------------------------------------------------------------------------
+
+export interface Top10 {
+      insumosAumento: MoverInsumo[];
+      subrecetasAumento: MoverReceta[];
+      recetasImpactadas: MoverReceta[];
+      familias: VariacionGrupo[];
+      subfamilias: VariacionGrupo[];
+}
+
+export interface AnalysisData {
+      insumoMasInflacionario: MoverInsumo | null;
+      subrecetaMasAfectada: MoverReceta | null;
+      recetaMasAfectada: MoverReceta | null;
+      variacionPromedio: { insumos: number; subrecetas: number; recetas: number; global: number };
+      riesgoMenu: RiesgoMenu;
+      alertas: Alerta[];
+      top10: Top10;
+      moversInsumos: MoverInsumo[];
+      moversSubrecetas: MoverReceta[];
+      moversRecetas: MoverReceta[];
+      impactoMenu: RecetaAfectada[];
+      impactoSubrecetas: SubrecetaAfectada[];
+}
+
+export function buildAnalysisData(dataset: DatasetCompleto): AnalysisData {
+      const { insumos, subrecetas, recetas, ingredientes, preciosHistoricos, historialRecetas, familias, subfamilias } = dataset;
+      const padres = buildPadres(ingredientes);
+
+  const moversInsumos = construirMoversInsumos(insumos, preciosHistoricos).sort((a, b) => b.variacionPct - a.variacionPct);
+      const moversSubrecetas = construirMoversRecetas(subrecetas, historialRecetas, true);
+      const moversRecetas = construirMoversRecetas(recetas, historialRecetas, false);
+      const moversRecetasTodas = construirMoversRecetas([...subrecetas, ...recetas], historialRecetas, false);
+
+  const recetasLive = recetas.map((r) => {
+          const fcObj = foodCostObjetivoDe(r);
+          const cp = Number(r.costo_porcion) || 0;
+          const precioReal = sanitizePrecio(r.precio_real);
+          const fc = foodCost(cp, precioReal);
+          return { fueraObjetivo: fc > fcObj };
+  });
+
+  const riesgoMenu = construirRiesgoMenu(recetasLive, moversSubrecetas, moversRecetas);
+      const alertas = construirAlertas(moversInsumos, moversSubrecetas, moversRecetas, padres);
+      const variacionFamilia = construirVariacionPorFamilia(moversRecetasTodas, subfamilias, familias);
+      const variacionSubfamilia = construirVariacionPorSubfamilia(moversRecetasTodas, subfamilias);
+
+  const impactoPorReceta = new Map<string, RecetaAfectada>();
+      const impactoPorSubreceta = new Map<string, SubrecetaAfectada>();
+      const movidos: { tipo: TipoItem; id: string }[] = [
+              ...moversInsumos.filter((m) => m.variacionAbs !== 0).map((m) => ({ tipo: 'insumo' as TipoItem, id: m.id })),
+              ...moversSubrecetas.filter((m) => m.variacionAbs !== 0).map((m) => ({ tipo: 'subreceta' as TipoItem, id: m.id })),
+            ];
+      movidos.forEach(({ tipo, id }) => {
+              const mv: any = tipo === 'insumo' ? moversInsumos.find((m) => m.id === id) : moversSubrecetas.find((m) => m.id === id);
+              if (!mv) return;
+              const resultado = calculateCostImpact({
+                        tipo,
+                        itemId: id,
+                        costoAnterior: mv.costoAnterior,
+                        costoNuevo: tipo === 'insumo' ? mv.costoActual : mv.costoNuevo,
+                        dataset,
+              });
+              resultado.recetasAfectadas.forEach((ra) => {
+                        const previo = impactoPorReceta.get(ra.id);
+                        if (!previo || Math.abs(ra.impactoEconomico) > Math.abs(previo.impactoEconomico)) impactoPorReceta.set(ra.id, ra);
+              });
+              resultado.subrecetasAfectadas.forEach((sa) => {
+                        const previo = impactoPorSubreceta.get(sa.id);
+                        if (!previo || Math.abs(sa.impactoEconomico) > Math.abs(previo.impactoEconomico)) impactoPorSubreceta.set(sa.id, sa);
+              });
+      });
+
+  const impactoMenu = Array.from(impactoPorReceta.values()).sort((a, b) => b.impactoEconomico - a.impactoEconomico);
+      const impactoSubrecetas = Array.from(impactoPorSubreceta.values()).sort((a, b) => b.impactoEconomico - a.impactoEconomico);
+
+  const variacionPromedio = {
+          insumos: moversInsumos.length ? moversInsumos.reduce((a, m) => a + m.variacionPct, 0) / moversInsumos.length : 0,
+          subrecetas: moversSubrecetas.length ? moversSubrecetas.reduce((a, m) => a + m.variacionPct, 0) / moversSubrecetas.length : 0,
+          recetas: moversRecetas.length ? moversRecetas.reduce((a, m) => a + m.variacionPct, 0) / moversRecetas.length : 0,
+          global: 0,
+  };
+      const todasVariaciones = [...moversInsumos.map((m) => m.variacionPct), ...moversSubrecetas.map((m) => m.variacionPct), ...moversRecetas.map((m) => m.variacionPct)];
+      variacionPromedio.global = todasVariaciones.length ? todasVariaciones.reduce((a, v) => a + v, 0) / todasVariaciones.length : 0;
+
+  return {
+          insumoMasInflacionario: moversInsumos[0] || null,
+          subrecetaMasAfectada: moversSubrecetas[0] || null,
+          recetaMasAfectada: moversRecetas[0] || null,
+          variacionPromedio,
+          riesgoMenu,
+          alertas,
+          top10: {
+                    insumosAumento: moversInsumos.filter((m) => m.variacionPct > 0).slice(0, 10),
+                    subrecetasAumento: moversSubrecetas.filter((m) => m.variacionPct > 0).slice(0, 10),
+                    recetasImpactadas: moversRecetas.slice(0, 10),
+                    familias: variacionFamilia.slice(0, 10),
+                    subfamilias: variacionSubfamilia.slice(0, 10),
+          },
+          moversInsumos,
+          moversSubrecetas,
+          moversRecetas,
+          impactoMenu,
+          impactoSubrecetas,
+  };
+}
