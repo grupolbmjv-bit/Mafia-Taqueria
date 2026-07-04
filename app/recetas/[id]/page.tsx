@@ -222,7 +222,7 @@ export default async function RecetaDetallePage({ params }: { params: Promise<{ 
             <div className="progress-track mt-4">
               <div className="progress-fill" style={{ width: `${Math.min(100, Math.max(0, foodCost * 100)).toFixed(0)}%`, backgroundColor: s.hex }} />
             </div>
-            <p className="mt-2 text-xs text-muted">Objetivo {fcPct(margenObj)}</p>
+            <p className="mt-2 text-xs text-muted">Objetivo {fcPct(foodCostObjetivo)}</p>
           </section>
 
           <section className="rounded-lg border border-salvia-100 bg-white p-4">
