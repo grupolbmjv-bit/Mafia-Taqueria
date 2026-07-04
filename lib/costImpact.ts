@@ -456,3 +456,109 @@ export function construirVariacionPorSubfamilia(movers: MoverReceta[], subfamili
         .map(([id, v]) => ({ id, nombre: v.nombre, variacionPromedio: v.n ? v.suma / v.n : 0, itemsAfectados: v.n }))
         .sort((a, b) => Math.abs(b.variacionPromedio) - Math.abs(a.variacionPromedio));
 }
+
+// ---------------------------------------------------------------------------
+// Alertas automaticas: precio de insumo, costo de subreceta, costo de
+// receta, Food Cost, utilidad y margen.
+// ---------------------------------------------------------------------------
+
+export interface Alerta {
+      nivel: 'rojo' | 'amarillo' | 'verde';
+      categoria: 'insumo' | 'subreceta' | 'receta' | 'utilidad' | 'food_cost' | 'margen';
+      mensaje: string;
+}
+
+export function construirAlertas(
+      moversInsumos: MoverInsumo[],
+      moversSubrecetas: MoverReceta[],
+      moversRecetas: MoverReceta[],
+      padres: Map<string, string[]>
+    ): Alerta[] {
+      const alertas: Alerta[] = [];
+
+  moversInsumos
+        .filter((m) => m.variacionPct >= 15)
+        .sort((a, b) => b.variacionPct - a.variacionPct)
+        .slice(0, 8)
+        .forEach((m) => {
+                  const recetasAfectadas = encontrarAfectados(m.id, padres).recetaIds.size;
+                  alertas.push({
+                              nivel: m.variacionPct >= 30 ? 'rojo' : 'amarillo',
+                              categoria: 'insumo',
+                              mensaje: m.articulo + ' subio ' + m.variacionPct.toFixed(1) + '% de precio y afecta ' + recetasAfectadas + ' receta(s).',
+                  });
+        });
+
+  moversSubrecetas
+        .filter((m) => Math.abs(m.variacionPct) >= 10)
+        .slice(0, 8)
+        .forEach((m) => {
+                  const recetasAfectadas = encontrarAfectados(m.id, padres).recetaIds.size;
+                  alertas.push({
+                              nivel: m.variacionPct >= 20 ? 'rojo' : 'amarillo',
+                              categoria: 'subreceta',
+                              mensaje: 'La subreceta ' + m.nombre + ' ' + (m.variacionPct >= 0 ? 'aumento' : 'se redujo') + ' ' + Math.abs(m.variacionPct).toFixed(1) + '% y afecta ' + recetasAfectadas + ' receta(s).',
+                  });
+        });
+
+  moversRecetas.forEach((m) => {
+          if (Math.abs(m.variacionAbs) >= 200) {
+                    alertas.push({
+                                nivel: m.variacionAbs >= 0 ? 'amarillo' : 'verde',
+                                categoria: 'receta',
+                                mensaje: m.nombre + ' ' + (m.variacionAbs >= 0 ? 'incremento' : 'redujo') + ' $' + Math.round(Math.abs(m.variacionAbs)) + ' por porcion.',
+                    });
+          }
+                           const perdidaUtilidad = m.utilidadAnterior - m.utilidadNueva;
+          if (m.utilidadAnterior > 0 && (perdidaUtilidad / m.utilidadAnterior) * 100 >= 10) {
+                    alertas.push({
+                                nivel: 'rojo',
+                                categoria: 'utilidad',
+                                mensaje: m.nombre + ' perdio ' + ((perdidaUtilidad / m.utilidadAnterior) * 100).toFixed(1) + '% de utilidad.',
+                    });
+          }
+          const deltaFc = (m.foodCostNuevo - m.foodCostAnterior) * 100;
+          if (Math.abs(deltaFc) >= 3) {
+                    alertas.push({
+                                nivel: deltaFc >= 0 ? 'amarillo' : 'verde',
+                                categoria: 'food_cost',
+                                mensaje: 'El Food Cost de ' + m.nombre + ' ' + (deltaFc >= 0 ? 'subio' : 'bajo') + ' ' + Math.abs(deltaFc).toFixed(1) + ' puntos.',
+                    });
+          }
+          const base = m.precioSugeridoAnterior || 1;
+          const deltaMargen = ((m.precioSugeridoNuevo - m.precioSugeridoAnterior) / base) * 100;
+          if (Math.abs(deltaMargen) >= 10) {
+                    alertas.push({
+                                nivel: 'amarillo',
+                                categoria: 'margen',
+                                mensaje: 'El precio sugerido de ' + m.nombre + ' deberia ajustarse ' + (deltaMargen >= 0 ? '+' : '') + deltaMargen.toFixed(1) + '% para mantener el margen.',
+                    });
+          }
+  });
+
+  const orden = { rojo: 0, amarillo: 1, verde: 2 } as const;
+      return alertas.sort((a, b) => orden[a.nivel] - orden[b.nivel]);
+}
+
+// ---------------------------------------------------------------------------
+// Riesgo del menu (quinta tarjeta del resumen superior)
+// ---------------------------------------------------------------------------
+
+export interface RiesgoMenu {
+      recetasEnRiesgo: number;
+      subrecetasCriticas: number;
+      costoAdicionalGenerado: number;
+      impactoAcumulado: number;
+}
+
+export function construirRiesgoMenu(
+      recetasLive: { fueraObjetivo: boolean }[],
+      moversSubrecetas: MoverReceta[],
+      moversRecetas: MoverReceta[]
+    ): RiesgoMenu {
+      const recetasEnRiesgo = recetasLive.filter((r) => r.fueraObjetivo).length;
+      const subrecetasCriticas = moversSubrecetas.filter((m) => m.variacionPct >= 10).length;
+      const costoAdicionalGenerado = moversRecetas.reduce((a, m) => a + Math.max(0, m.variacionAbs), 0);
+      const impactoAcumulado = moversSubrecetas.reduce((a, m) => a + Math.max(0, m.variacionAbs), 0) + costoAdicionalGenerado;
+      return { recetasEnRiesgo, subrecetasCriticas, costoAdicionalGenerado, impactoAcumulado };
+}
