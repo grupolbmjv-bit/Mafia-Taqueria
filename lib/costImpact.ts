@@ -358,6 +358,13 @@ export interface MoverReceta {
   subfamiliaId: string;
 }
 
+function costoPorcionDeHistorial(h: HistorialReceta, rendimiento: number): number {
+    const cp = Number(h.costo_porcion);
+    if (cp > 0) return cp;
+    const ct = Number(h.costo_total);
+    return ct > 0 && rendimiento > 0 ? ct / rendimiento : 0;
+}
+
 export function construirMoversRecetas(lista: Receta[], historialRecetas: HistorialReceta[], esSubreceta: boolean): MoverReceta[] {
   const porReceta = new Map<string, HistorialReceta[]>();
   historialRecetas.forEach((h) => {
@@ -371,8 +378,9 @@ export function construirMoversRecetas(lista: Receta[], historialRecetas: Histor
     const regs = (porReceta.get(String(r.id)) || []).slice().sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
     if (!regs.length) return;
     const primero = regs[0];
-    const costoAnterior = Number(primero.costo_porcion) || 0;
-    const costoNuevo = Number(r.costo_porcion) || 0;
+    const rendimiento = Number(r.rendimiento) > 0 ? Number(r.rendimiento) : 1;
+    const costoAnterior = costoPorcionDeHistorial(primero, rendimiento);
+    const costoNuevo = Number(r.costo_porcion) > 0 ? Number(r.costo_porcion) : (Number(r.costo_total) > 0 ? Number(r.costo_total) / rendimiento : 0);
     if (costoAnterior <= 0) return;
     const variacionAbs = costoNuevo - costoAnterior;
     const fcObj = foodCostObjetivoDe(r);
