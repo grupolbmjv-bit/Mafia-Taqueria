@@ -254,7 +254,7 @@ export default function ResumenClient() {
         <p className="py-10 text-center text-salvia-500">Cargando tablero...</p>
       ) : (
         <>
-          <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <section className="mb-6 dashboard-grid">
             <Card label="Recetas activas" value={String(activos.length)} tone="blue" icon="📘" />
             <Card label="Food Cost promedio" value={fcPct(rows.filter((x) => x.fc > 0).reduce((a, x, _, arr) => a + x.fc / arr.length, 0))} tone="green" icon="📊" />
             <Card label="Utilidad potencial" value={money(utilidadTotal)} tone="green" icon="💰" />
