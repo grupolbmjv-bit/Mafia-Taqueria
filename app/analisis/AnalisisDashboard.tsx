@@ -17,9 +17,9 @@ const fechaCorta = (v: string) => {
 
 function riesgoSim(fc: number) {
   const v = Number(fc) || 0;
-  if (v <= 0.33) return { emoji: 'ð¢', label: 'Rentable', bg: 'bg-[#DCFCE7]', text: 'text-[#16A34A]', border: 'border-[#BBF7D0]', dot: '#16A34A' };
-  if (v <= 0.35) return { emoji: 'ð¡', label: 'Vigilar', bg: 'bg-[#FEF3C7]', text: 'text-[#B45309]', border: 'border-[#FDE68A]', dot: '#F59E0B' };
-  return { emoji: 'ð´', label: 'Accion', bg: 'bg-[#FEE2E2]', text: 'text-[#DC2626]', border: 'border-[#FECACA]', dot: '#DC2626' };
+  if (v <= 0.33) return { emoji: '', label: 'Rentable', bg: 'bg-[#DCFCE7]', text: 'text-[#16A34A]', border: 'border-[#BBF7D0]', dot: '#16A34A' };
+  if (v <= 0.35) return { emoji: '', label: 'Vigilar', bg: 'bg-[#FEF3C7]', text: 'text-[#B45309]', border: 'border-[#FDE68A]', dot: '#F59E0B' };
+  return { emoji: '', label: 'Accion', bg: 'bg-[#FEE2E2]', text: 'text-[#DC2626]', border: 'border-[#FECACA]', dot: '#DC2626' };
 }
 
 function descargarCSV(nombre: string, filas: (string | number)[][]) {
@@ -27,7 +27,7 @@ function descargarCSV(nombre: string, filas: (string | number)[][]) {
     const s = String(c ?? '');
     return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   }).join(';')).join('\r\n');
-  const blob = new Blob(['ï»¿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -109,11 +109,11 @@ function MoverList({ items, icono }: { items: { id: string; nombre: string; vari
 }
 
 const alertaColor = (n: string) => (n === 'rojo' ? 'border-red-200 bg-red-50 text-red-700' : n === 'amarillo' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-green-200 bg-green-50 text-green-700');
-const alertaIcono = (n: string) => (n === 'rojo' ? 'ð´' : n === 'amarillo' ? 'ð¡' : 'ð¢');
+const alertaIcono = (n: string) => (n === 'rojo' ? '' : n === 'amarillo' ? '' : '');
 const categoriaLabel = (c: string) => ({ insumo: 'Insumo', subreceta: 'Subreceta', receta: 'Receta', utilidad: 'Utilidad', food_cost: 'Food Cost', margen: 'Margen' } as Record<string, string>)[c] || c;
 
 function NodoArbol({ nodo }: { nodo: NodoTrazabilidad }) {
-  const icono = nodo.tipo === 'insumo' ? 'ð§' : nodo.tipo === 'subreceta' ? 'ð¥£' : 'ð½ï¸';
+  const icono = nodo.tipo === 'insumo' ? '' : nodo.tipo === 'subreceta' ? '' : '';
   return (
     <details className="ml-1 border-l border-line pl-3" open>
       <summary className="cursor-pointer select-none py-1 text-sm text-ink">
@@ -122,7 +122,7 @@ function NodoArbol({ nodo }: { nodo: NodoTrazabilidad }) {
         <span className="ml-2 text-xs text-muted">({nodo.tipo})</span>
         {nodo.metricas && (
           <span className={'ml-2 text-xs font-semibold ' + (nodo.metricas.fueraObjetivo ? 'text-red-600' : 'text-green-700')}>
-            Food Cost {(nodo.metricas.foodCost * 100).toFixed(1)}% Â· Utilidad {money(nodo.metricas.utilidad)} Â· Precio sug. {money(nodo.metricas.precioSugerido)}
+            Food Cost {(nodo.metricas.foodCost * 100).toFixed(1)}%  -  Utilidad {money(nodo.metricas.utilidad)}  -  Precio sug. {money(nodo.metricas.precioSugerido)}
           </span>
         )}
       </summary>
@@ -190,7 +190,7 @@ function Simulador({ dataset }: { dataset: DatasetCompleto }) {
   return (
     <div className="card p-5">
       <div className="mb-1 flex items-center gap-2">
-        <h2 className="font-display text-lg font-bold text-ambar-700">ð§ª Simular impacto</h2>
+        <h2 className="font-display text-lg font-bold text-ambar-700"> Simular impacto</h2>
         <span className="chip bg-slate-100 text-slate-600">Solo consulta, no guarda</span>
       </div>
       <p className="mb-4 text-xs text-salvia-700">Elige un insumo o subreceta y prueba un nuevo costo o un porcentaje de variacion. Veras de inmediato el efecto en cascada sobre subrecetas, recetas, food cost, utilidad y precio sugerido.</p>
@@ -237,7 +237,7 @@ function Simulador({ dataset }: { dataset: DatasetCompleto }) {
       {resultado && (
         <div className="mt-4 border-t border-line pt-4">
           <p className="mb-3 text-sm">
-            <span className="font-semibold">{resultado.insumo}</span>: {money(resultado.costoAnterior)} â {money(resultado.costoNuevo)}{' '}
+            <span className="font-semibold">{resultado.insumo}</span>: {money(resultado.costoAnterior)}  ->  {money(resultado.costoNuevo)}{' '}
             <span className={resultado.porcentajeVariacion >= 0 ? 'text-red-600' : 'text-green-700'}>({pct(resultado.porcentajeVariacion)})</span>
           </p>
 
@@ -435,45 +435,45 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
           <p className="text-xs uppercase tracking-wide text-salvia-600">Insumo mas inflacionario</p>
           {analysis.insumoMasInflacionario ? (
             <>
-              <p className="mt-1 truncate font-semibold text-ink" title={analysis.insumoMasInflacionario.articulo}>ð¥ {analysis.insumoMasInflacionario.articulo}</p>
+              <p className="mt-1 truncate font-semibold text-ink" title={analysis.insumoMasInflacionario.articulo}> {analysis.insumoMasInflacionario.articulo}</p>
               <p className="text-2xl font-bold text-red-600">{pct(analysis.insumoMasInflacionario.variacionPct)}</p>
             </>
-          ) : <p className="mt-1 text-muted">â</p>}
+          ) : <p className="mt-1 text-muted">N/A</p>}
         </div>
         <div className="card p-4">
           <p className="text-xs uppercase tracking-wide text-salvia-600">Subreceta mas afectada</p>
           {analysis.subrecetaMasAfectada ? (
             <>
-              <p className="mt-1 truncate font-semibold text-ink" title={analysis.subrecetaMasAfectada.nombre}>ð¥£ {analysis.subrecetaMasAfectada.nombre}</p>
+              <p className="mt-1 truncate font-semibold text-ink" title={analysis.subrecetaMasAfectada.nombre}> {analysis.subrecetaMasAfectada.nombre}</p>
               <p className="text-2xl font-bold text-red-600">{pct(analysis.subrecetaMasAfectada.variacionPct)}</p>
             </>
-          ) : <p className="mt-1 text-muted">â</p>}
+          ) : <p className="mt-1 text-muted">N/A</p>}
         </div>
         <div className="card p-4">
           <p className="text-xs uppercase tracking-wide text-salvia-600">Receta mas afectada</p>
           {analysis.recetaMasAfectada ? (
             <>
-              <p className="mt-1 truncate font-semibold text-ink" title={analysis.recetaMasAfectada.nombre}>ð½ï¸ {analysis.recetaMasAfectada.nombre}</p>
+              <p className="mt-1 truncate font-semibold text-ink" title={analysis.recetaMasAfectada.nombre}> {analysis.recetaMasAfectada.nombre}</p>
               <p className="text-2xl font-bold text-red-600">{money(analysis.recetaMasAfectada.variacionAbs)}</p>
             </>
-          ) : <p className="mt-1 text-muted">â</p>}
+          ) : <p className="mt-1 text-muted">N/A</p>}
         </div>
         <div className="card p-4">
           <p className="text-xs uppercase tracking-wide text-salvia-600">Variacion promedio de costos</p>
           <p className={'mt-1 text-3xl font-bold ' + (analysis.variacionPromedio.global >= 0 ? 'text-red-600' : 'text-green-700')}>{pct(analysis.variacionPromedio.global)}</p>
-          <p className="mt-1 text-[11px] text-muted">Insumos {pct(analysis.variacionPromedio.insumos)} Â· Subrecetas {pct(analysis.variacionPromedio.subrecetas)} Â· Recetas {pct(analysis.variacionPromedio.recetas)}</p>
+          <p className="mt-1 text-[11px] text-muted">Insumos {pct(analysis.variacionPromedio.insumos)}  -  Subrecetas {pct(analysis.variacionPromedio.subrecetas)}  -  Recetas {pct(analysis.variacionPromedio.recetas)}</p>
         </div>
         <div className="card p-4">
           <p className="text-xs uppercase tracking-wide text-salvia-600">Riesgo del menu</p>
           <p className="mt-1 text-2xl font-bold text-amber-600">{analysis.riesgoMenu.recetasEnRiesgo} recetas</p>
-          <p className="text-[11px] text-muted">{analysis.riesgoMenu.subrecetasCriticas} subreceta(s) critica(s) Â· costo adicional {money(analysis.riesgoMenu.costoAdicionalGenerado)}</p>
+          <p className="text-[11px] text-muted">{analysis.riesgoMenu.subrecetasCriticas} subreceta(s) critica(s)  -  costo adicional {money(analysis.riesgoMenu.costoAdicionalGenerado)}</p>
           <p className="mt-1 text-[10px] italic text-muted">Impacto mensual no disponible: el sistema no registra volumen de ventas.</p>
         </div>
       </section>
 
       {analysis.alertas.length > 0 && (
         <section className="card p-5">
-          <h2 className="mb-3 font-display text-lg font-bold text-ambar-700">ð Alertas automaticas</h2>
+          <h2 className="mb-3 font-display text-lg font-bold text-ambar-700"> Alertas automaticas</h2>
           <ul className="space-y-2">
             {analysis.alertas.map((a, i) => (
               <li key={i} className={'flex items-center gap-2 rounded-md border px-3 py-2 text-sm ' + alertaColor(a.nivel)}>
@@ -488,7 +488,7 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
 
       <section className="card p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-2 text-sm font-semibold text-ambar-700">ð Reportes:</span>
+          <span className="mr-2 text-sm font-semibold text-ambar-700"> Reportes:</span>
           <button onClick={exportInsumos} className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-slate-50">Historial de precios (Excel)</button>
           <button onClick={exportSubrecetas} className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-slate-50">Impacto en subrecetas (Excel)</button>
           <button onClick={exportRecetas} className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-slate-50">Impacto en recetas (Excel)</button>
@@ -509,17 +509,17 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
           <div className="grid gap-6 lg:grid-cols-2">
             <section className="card p-5">
               <h3 className="mb-3 font-semibold text-ink">Top 10 insumos con mayor aumento</h3>
-              <MoverList items={analysis.top10.insumosAumento.map((m) => ({ id: m.id, nombre: m.articulo, variacionPct: m.variacionPct }))} icono="ð´" />
+              <MoverList items={analysis.top10.insumosAumento.map((m) => ({ id: m.id, nombre: m.articulo, variacionPct: m.variacionPct }))} icono="" />
             </section>
             <section className="card p-5">
               <h3 className="mb-3 font-semibold text-ink">Top 10 subrecetas con mayor aumento</h3>
-              <MoverList items={analysis.top10.subrecetasAumento.map((m) => ({ id: m.id, nombre: m.nombre, variacionPct: m.variacionPct }))} icono="ð¥£" />
+              <MoverList items={analysis.top10.subrecetasAumento.map((m) => ({ id: m.id, nombre: m.nombre, variacionPct: m.variacionPct }))} icono="" />
             </section>
           </div>
           <div className="grid gap-6 lg:grid-cols-2">
             <section className="card p-5">
               <h3 className="mb-3 font-semibold text-ink">Top 10 recetas mas impactadas</h3>
-              <MoverList items={analysis.top10.recetasImpactadas.map((m) => ({ id: m.id, nombre: m.nombre, variacionPct: m.variacionPct }))} icono="ð½ï¸" />
+              <MoverList items={analysis.top10.recetasImpactadas.map((m) => ({ id: m.id, nombre: m.nombre, variacionPct: m.variacionPct }))} icono="" />
             </section>
             <section className="card p-5">
               <h3 className="mb-3 font-semibold text-ink">Variacion por familia</h3>
@@ -567,7 +567,7 @@ export function AnalisisDashboard({ analysis, dataset, evolucionCosto }: { analy
                         <td className="text-right">{money(r.costoNuevo)}</td>
                         <td className={'text-right font-semibold ' + (r.fueraObjetivo ? 'text-red-600' : 'text-green-700')}>{(r.foodCostNuevo * 100).toFixed(1)}%</td>
                         <td className="text-right">{money(r.precioSugeridoNuevo)}</td>
-                        <td className="text-center">{r.fueraObjetivo ? 'ð´' : 'ð¢'}</td>
+                        <td className="text-center">{r.fueraObjetivo ? '' : ''}</td>
                       </tr>
                     ))}
                   </tbody>
