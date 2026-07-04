@@ -11,7 +11,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-5xl flex-col items-center justify-center gap-12 px-6 py-16 text-center">
+    <main className="app-shell flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center gap-12 py-16 text-center">
       <div className="space-y-4">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E3A5F] text-2xl font-bold text-white shadow-card">GC</div>
         <h1 className="font-display text-5xl font-bold tracking-tight text-[#1E3A5F]">GastroCore</h1>
@@ -21,7 +21,7 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="w-full dashboard-grid">
         {secciones.map((s) => (
           <Link
             key={s.href}
