@@ -203,7 +203,7 @@ function NuevaRecetaInner() {
     fc <= 0 ? 'text-salvia-400' : fc <= foodCostObjetivo * 100 ? 'text-green-700' : fc <= 40 ? 'text-ambar-600' : 'text-red-600';
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6">
+    <main className="app-shell py-6">
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-ambar-700">{modoEdicion ? 'Editar receta' : 'Nueva receta'}</h1>
