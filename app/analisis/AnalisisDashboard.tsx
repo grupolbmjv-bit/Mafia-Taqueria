@@ -221,7 +221,7 @@ export function AnalisisDashboard({ analytics, insumos }: { analytics: Analytics
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="dashboard-grid">
         <div className="card p-4">
           <p className="text-xs uppercase tracking-wide text-salvia-600">Insumo más inflacionario</p>
           {ind.insumo_mas_inflacionario ? (
