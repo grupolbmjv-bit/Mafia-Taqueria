@@ -287,3 +287,115 @@ export function calculateCostImpact(input: CostImpactInput): CostImpactResult {
         porcentajeVariacion: costoAnterior > 0 ? ((costoNuevo - costoAnterior) / costoAnterior) * 100 : 0,
           };
 }
+
+// ---------------------------------------------------------------------------
+// Movers historicos: cuanto cambio cada insumo/subreceta/receta desde su
+// primer registro historico hasta hoy (fuente: PreciosHistoricos / HistorialRecetas)
+// ---------------------------------------------------------------------------
+
+export interface MoverInsumo {
+      id: string;
+      articulo: string;
+      referencia: string;
+      subfamiliaId: string;
+      costoAnterior: number;
+      costoActual: number;
+      variacionAbs: number;
+      variacionPct: number;
+      cambios: number;
+      ultimaFecha: string;
+}
+
+export function construirMoversInsumos(insumos: Insumo[], preciosHistoricos: HistorialInsumo[]): MoverInsumo[] {
+      const porInsumo = new Map<string, HistorialInsumo[]>();
+      preciosHistoricos.forEach((h) => {
+              const id = String(h.insumo_id || '');
+              if (!id) return;
+              if (!porInsumo.has(id)) porInsumo.set(id, []);
+              porInsumo.get(id)!.push(h);
+      });
+      const out: MoverInsumo[] = [];
+      insumos.forEach((ins) => {
+              const regs = (porInsumo.get(String(ins.id)) || []).slice().sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+              if (!regs.length) return;
+              const primero = regs[0];
+              const base = primero.coste_anterior !== undefined && primero.coste_anterior !== null && (primero.coste_anterior as any) !== '' ? primero.coste_anterior : primero.coste;
+              const costoAnterior = Number(base) || 0;
+              const costoActual = Number(ins.coste) || 0;
+              const variacionAbs = costoActual - costoAnterior;
+              out.push({
+                        id: ins.id,
+                        articulo: ins.articulo,
+                        referencia: ins.referencia,
+                        subfamiliaId: ins.subfamilia_id,
+                        costoAnterior,
+                        costoActual,
+                        variacionAbs,
+                        variacionPct: costoAnterior ? (variacionAbs / costoAnterior) * 100 : 0,
+                        cambios: regs.length,
+                        ultimaFecha: regs[regs.length - 1].fecha,
+              });
+      });
+      return out;
+}
+
+export interface MoverReceta {
+      id: string;
+      nombre: string;
+      esSubreceta: boolean;
+      costoAnterior: number;
+      costoNuevo: number;
+      variacionAbs: number;
+      variacionPct: number;
+      foodCostAnterior: number;
+      foodCostNuevo: number;
+      utilidadAnterior: number;
+      utilidadNueva: number;
+      precioSugeridoAnterior: number;
+      precioSugeridoNuevo: number;
+      cambios: number;
+      ultimaFecha: string;
+      subfamiliaId: string;
+}
+
+export function construirMoversRecetas(lista: Receta[], historialRecetas: HistorialReceta[], esSubreceta: boolean): MoverReceta[] {
+      const porReceta = new Map<string, HistorialReceta[]>();
+      historialRecetas.forEach((h) => {
+              const id = String(h.receta_id || '');
+              if (!id) return;
+              if (!porReceta.has(id)) porReceta.set(id, []);
+              porReceta.get(id)!.push(h);
+      });
+      const out: MoverReceta[] = [];
+      lista.forEach((r) => {
+              const regs = (porReceta.get(String(r.id)) || []).slice().sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+              if (!regs.length) return;
+              const primero = regs[0];
+              const costoAnterior = Number(primero.costo_porcion) || 0;
+              const costoNuevo = Number(r.costo_porcion) || 0;
+              if (costoAnterior <= 0) return;
+              const variacionAbs = costoNuevo - costoAnterior;
+              const fcObj = foodCostObjetivoDe(r);
+              const precioReal = sanitizePrecio(r.precio_real);
+              const foodCostAnterior = Number(primero.food_cost) > 0 ? Number(primero.food_cost) : foodCost(costoAnterior, precioReal);
+              out.push({
+                        id: r.id,
+                        nombre: r.nombre,
+                        esSubreceta,
+                        costoAnterior,
+                        costoNuevo,
+                        variacionAbs,
+                        variacionPct: (variacionAbs / costoAnterior) * 100,
+                        foodCostAnterior,
+                        foodCostNuevo: foodCost(costoNuevo, precioReal),
+                        utilidadAnterior: calcUtilidad(precioReal, costoAnterior),
+                        utilidadNueva: calcUtilidad(precioReal, costoNuevo),
+                        precioSugeridoAnterior: calcPrecioSugerido(costoAnterior, fcObj),
+                        precioSugeridoNuevo: calcPrecioSugerido(costoNuevo, fcObj),
+                        cambios: regs.length,
+                        ultimaFecha: regs[regs.length - 1].fecha,
+                        subfamiliaId: r.subfamilia_id,
+              });
+      });
+      return out.sort((a, b) => b.variacionPct - a.variacionPct);
+}
