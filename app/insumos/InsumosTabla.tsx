@@ -155,7 +155,7 @@ function EditarInsumoModal({
     try {
       const r = await fetch('/api/insumos/historial?id=' + encodeURIComponent(insumo.id));
       const j = await r.json();
-      setHistorial(j.ok ? j.data : []);
+      setHistorial(j.ok && Array.isArray(j.data) ? j.data : []);
     } catch {
       setHistorial([]);
     } finally {
