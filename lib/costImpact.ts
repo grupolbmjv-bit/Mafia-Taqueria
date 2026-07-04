@@ -399,3 +399,60 @@ export function construirMoversRecetas(lista: Receta[], historialRecetas: Histor
       });
       return out.sort((a, b) => b.variacionPct - a.variacionPct);
 }
+
+// ---------------------------------------------------------------------------
+// Variacion agregada por familia / subfamilia (usa subfamilia_id de cada
+// receta o subreceta y la relacion Subfamilia -> Familia).
+// ---------------------------------------------------------------------------
+
+export interface VariacionGrupo {
+      id: string;
+      nombre: string;
+      variacionPromedio: number;
+      itemsAfectados: number;
+}
+
+function mapaSubfamiliaFamilia(subfamilias: Subfamilia[], familias: Familia[]) {
+      const familiaPorId = new Map(familias.map((f) => [String(f.id), f.nombre]));
+      const m = new Map<string, { familiaId: string; familiaNombre: string }>();
+      subfamilias.forEach((sf) => {
+              m.set(String(sf.id), {
+                        familiaId: String(sf.familia_id || ''),
+                        familiaNombre: familiaPorId.get(String(sf.familia_id || '')) || 'Sin familia',
+              });
+      });
+      return m;
+}
+
+export function construirVariacionPorFamilia(movers: MoverReceta[], subfamilias: Subfamilia[], familias: Familia[]): VariacionGrupo[] {
+      const mapa = mapaSubfamiliaFamilia(subfamilias, familias);
+      const acc = new Map<string, { nombre: string; suma: number; n: number }>();
+      movers.forEach((m) => {
+              const info = mapa.get(String(m.subfamiliaId));
+              const key = info ? info.familiaId : 'sin-familia';
+              const nombre = info ? info.familiaNombre : 'Sin familia';
+              if (!acc.has(key)) acc.set(key, { nombre, suma: 0, n: 0 });
+              const a = acc.get(key)!;
+              a.suma += m.variacionPct;
+              a.n += 1;
+      });
+      return Array.from(acc.entries())
+        .map(([id, v]) => ({ id, nombre: v.nombre, variacionPromedio: v.n ? v.suma / v.n : 0, itemsAfectados: v.n }))
+        .sort((a, b) => Math.abs(b.variacionPromedio) - Math.abs(a.variacionPromedio));
+}
+
+export function construirVariacionPorSubfamilia(movers: MoverReceta[], subfamilias: Subfamilia[]): VariacionGrupo[] {
+      const nombrePorId = new Map(subfamilias.map((sf) => [String(sf.id), sf.nombre]));
+      const acc = new Map<string, { nombre: string; suma: number; n: number }>();
+      movers.forEach((m) => {
+              const key = String(m.subfamiliaId || 'sin-subfamilia');
+              const nombre = nombrePorId.get(key) || 'Sin subfamilia';
+              if (!acc.has(key)) acc.set(key, { nombre, suma: 0, n: 0 });
+              const a = acc.get(key)!;
+              a.suma += m.variacionPct;
+              a.n += 1;
+      });
+      return Array.from(acc.entries())
+        .map(([id, v]) => ({ id, nombre: v.nombre, variacionPromedio: v.n ? v.suma / v.n : 0, itemsAfectados: v.n }))
+        .sort((a, b) => Math.abs(b.variacionPromedio) - Math.abs(a.variacionPromedio));
+}
